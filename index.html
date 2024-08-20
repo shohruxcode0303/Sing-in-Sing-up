@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Table with CRUD Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-4">User Table with CRUD Operations</h1>
+
+        <!-- Yangi foydalanuvchi qo'shish formasi -->
+        <div class="mb-6">
+            <input id="newUserName" type="text" placeholder="Name" class="px-4 py-2 border rounded mr-2">
+            <input id="newUserEmail" type="email" placeholder="Email" class="px-4 py-2 border rounded mr-2">
+            <button id="addUserBtn" class="bg-green-500 text-white px-4 py-2 rounded">Add User</button>
+        </div>
+
+        <!-- Foydalanuvchilar jadvali -->
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr class="w-full bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-6 text-left">Name</th>
+                    <th class="py-3 px-6 text-left">Email</th>
+                    <th class="py-3 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTable" class="text-gray-600 text-sm font-light">
+                <!-- JavaScript yordamida foydalanuvchilar ro'yxati qo'shiladi -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal for displaying user info -->
+    <div id="infoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-1/3">
+            <h2 class="text-2xl font-bold mb-4">User Info</h2>
+            <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+            <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+            <button id="closeModal" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
+
+    <!-- Modal for editing user info -->
+    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-1/3">
+            <h2 class="text-2xl font-bold mb-4">Edit User</h2>
+            <input id="editUserName" type="text" class="px-4 py-2 border rounded mb-2 w-full" placeholder="Name">
+            <input id="editUserEmail" type="email" class="px-4 py-2 border rounded mb-2 w-full" placeholder="Email">
+            <button id="saveEditBtn" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Save</button>
+            <button id="cancelEditBtn" class="bg-red-500 text-white px-4 py-2 rounded">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let users = [
+            { name: 'John Doe', email: 'john.doe@example.com' },
+            { name: 'Jane Smith', email: 'jane.smith@example.com' },
+            { name: 'Michael Johnson', email: 'michael.johnson@example.com' },
+        ];
+
+        let editIndex = null;
+
+        function renderTable() {
+            const tableBody = document.getElementById('userTable');
+            tableBody.innerHTML = '';
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.classList.add('w-full', 'bg-gray-200', 'text-gray-600', 'uppercase', 'text-sm', 'leading-normal');
+
+                row.innerHTML = `
+                    <td class="py-3 px-6 text-left">${user.name}</td>
+                    <td class="py-3 px-6 text-left">${user.email}</td>
+                    <td class="py-3 px-6 text-center">
+                        <button class="infoBtn bg-blue-500 text-white px-4 py-2 rounded mr-2" data-index="${index}">Info</button>
+                        <button class="editBtn bg-yellow-500 text-white px-4 py-2 rounded mr-2" data-index="${index}">Edit</button>
+                        <button class="deleteBtn bg-red-500 text-white px-4 py-2 rounded" data-index="${index}">Delete</button>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+
+            attachEventListeners();
+        }
+
+        function addUser() {
+            const nameInput = document.getElementById('newUserName');
+            const emailInput = document.getElementById('newUserEmail');
+
+            if (nameInput.value && emailInput.value) {
+                users.push({ name: nameInput.value, email: emailInput.value });
+                renderTable();
+                nameInput.value = '';
+                emailInput.value = '';
+            } else {
+                alert('Please fill in both fields');
+            }
+        }
+
+        function openInfoModal(index) {
+            const modal = document.getElementById('infoModal');
+            const user = users[index];
+            document.getElementById('modalUserName').innerText = user.name;
+            document.getElementById('modalUserEmail').innerText = user.email;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function deleteUser(index) {
+            users.splice(index, 1);
+            renderTable();
+        }
+
+        function openEditModal(index) {
+            const modal = document.getElementById('editModal');
+            const user = users[index];
+            editIndex = index;
+            document.getElementById('editUserName').value = user.name;
+            document.getElementById('editUserEmail').value = user.email;
+            modal.classList.remove('hidden');
+        }
+
+        function saveEdit() {
+            const nameInput = document.getElementById('editUserName');
+            const emailInput = document.getElementById('editUserEmail');
+
+            if (nameInput.value && emailInput.value) {
+                users[editIndex] = { name: nameInput.value, email: emailInput.value };
+                renderTable();
+                closeModal();
+            } else {
+                alert('Please fill in both fields');
+            }
+        }
+
+        function attachEventListeners() {
+            document.querySelectorAll('.infoBtn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    openInfoModal(index);
+                });
+            });
+
+            document.querySelectorAll('.editBtn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    openEditModal(index);
+                });
+            });
+
+            document.querySelectorAll('.deleteBtn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    deleteUser(index);
+                });
+            });
+        }
+
+        document.getElementById('closeModal').addEventListener('click', closeModal);
+        document.getElementById('addUserBtn').addEventListener('click', addUser);
+        document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+        document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+
+        renderTable();
+
+        
+    </script>
+</body>
+
+</html>
